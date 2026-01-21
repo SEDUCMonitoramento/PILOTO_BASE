@@ -1,7 +1,8 @@
 /**==================================
  * Constantes
  *==================================*/
-const ID_PLANILHA_ORIGEM = "1PX47xrTnfC5jacdSpaQUWPXd0a2HusxiyhcOb6CSrYk";
+// Nova Planilha Modelo fornecida pelo usuário
+const ID_PLANILHA_ORIGEM = "1ix0ymrAAL1kwYN4Yyc1QiwRW_R-68xyvVqkbPuJQTgg";
 const NOME_ABA_MODELO = "Doc_Ananf";
 const NOME_PASTA_ANANF = "ANANF";
 const PREFIXO_PLANILHA = "ANANF_";
@@ -49,10 +50,13 @@ function replicarAbaParaOutraPlanilha() {
     console.log(`RA do aluno: ${raAluno}`);
     console.log(`Nome do aluno: ${nomeAluno}`);
 
-    const { novaPlanilha, novaAba } = criarNovaPlanilha(idPastaANANF, raAluno);
+    // Cria nova planilha já com a aba copiada
+    // Alteração crucial: Passamos a abaModelo para copiar via Sheet.copyTo
+    const { novaPlanilha, novaAba } = criarNovaPlanilhaComCopia(idPastaANANF, raAluno, abaModelo);
     Logger.log(`Nova planilha criada: ${novaPlanilha.getName()} (ID: ${novaPlanilha.getId()})`);
 
-    replicarConteudo(abaModelo, novaAba);
+    // Preenche os dados
+    preencherDados(novaAba);
 
     const urlPlanilha = novaPlanilha.getUrl();
     console.timeEnd("Replicação Total");
@@ -67,6 +71,8 @@ function replicarAbaParaOutraPlanilha() {
   } catch (erro) {
     console.error("Erro na replicação ANANF: " + erro.message);
     Logger.log(">> [ERRO CRÍTICO]: " + erro.message);
+    // Stack trace só é útil no console IDE, mas logamos message
+    if (erro.stack) Logger.log(erro.stack);
     SpreadsheetApp.getUi().alert("Erro ao gerar ANANF: " + erro.message);
     throw erro;
   }
@@ -92,52 +98,59 @@ function carregarAbaModelo() {
 }
 
 /**
- * Cria planilha com nome formato: ANANF_[RA] - [data]
+ * Cria planilha nova e já copia a aba modelo para dentro dela.
+ * Remove a aba padrão que vem na criação.
  */
-function criarNovaPlanilha(idPastaANANF, raAluno) {
-  Logger.log("Criando arquivo da nova planilha...");
+function criarNovaPlanilhaComCopia(idPastaANANF, raAluno, abaModelo) {
+  Logger.log("Criando nova planilha e copiando aba modelo...");
   const dataFormatada = Utilities.formatDate(new Date(), TIMEZONE, FORMATO_DATA);
   const nomePlanilha = `${PREFIXO_PLANILHA}${raAluno} - ${dataFormatada}`;
 
+  // 1. Cria nova planilha (vem com 'Página1' padrão)
   const novaPlanilha = SpreadsheetApp.create(nomePlanilha);
 
-  let novaAba = novaPlanilha.getSheets()[0];
+  // 2. Copia a ABA INTEIRA do modelo para a nova planilha
+  // Isso resolve o erro de 'Target range and source range must be on the same spreadsheet'
+  Logger.log("Executando abaModelo.copyTo(novaPlanilha)...");
+  const novaAba = abaModelo.copyTo(novaPlanilha);
+
+  // 3. Renomeia a aba copiada para o nome correto
   novaAba.setName(NOME_ABA_MODELO);
 
+  // 4. Remove a aba padrão 'Página1' (sempre a primeira, índice 0 se a cópia foi para o fim)
+  // Geralmente a cópia vira a última ou segunda. Vamos listar e remover a que não é a nossa.
+  const sheets = novaPlanilha.getSheets();
+  if (sheets.length > 1) {
+    // Remove a primeira aba se ela não for a que acabamos de criar (segurança)
+    // A aba padrão 'Página1' geralmente é sheets[0] logo após criação
+    const abaPadrao = sheets[0];
+    if (abaPadrao.getId() !== novaAba.getId()) {
+      Logger.log(`Removendo aba padrão: ${abaPadrao.getName()}`);
+      novaPlanilha.deleteSheet(abaPadrao);
+    }
+  }
+
+  // 5. Move o arquivo para a pasta correta
   const pastaDestino = DriveApp.getFolderById(idPastaANANF);
   const arquivo = DriveApp.getFileById(novaPlanilha.getId());
   arquivo.moveTo(pastaDestino);
 
   console.log(`Planilha criada: ${nomePlanilha}`);
   Logger.log(`Arquivo movido para pasta de destino.`);
+
   return { novaPlanilha, novaAba };
 }
 
 /**
- * Replica dados, formatação, validações e dimensões.
+ * Preenche dados da info.js na nova aba.
+ * Não precisa mais copiar formatação/estrutura pois copyTo da aba já fez isso.
  */
-function replicarConteudo(abaOrigem, abaDestino) {
-  console.log("Replicando conteúdo completo...");
-  Logger.log(">> Iniciando replicarConteudo()");
-
-  const numLinhas = abaOrigem.getMaxRows();
-  const numColunas = abaOrigem.getMaxColumns();
-
-  Logger.log(`Dimensões origem: ${numLinhas} linhas x ${numColunas} colunas`);
-
-  ajustarDimensoes(abaDestino, numLinhas, numColunas);
-  Logger.log("Dimensões ajustadas.");
-
-  // Copia visual e estrutura
-  const rangeOrigem = abaOrigem.getRange(1, 1, numLinhas, numColunas);
-  const rangeDestino = abaDestino.getRange(1, 1);
-  rangeOrigem.copyTo(rangeDestino, SpreadsheetApp.CopyPasteType.PASTE_NORMAL, false);
-  Logger.log("Estrutura (PASTE_NORMAL) copiada.");
-
-  // Transfere dados mapeados
+function preencherDados(abaDestino) {
   console.log("Transferindo dados mapeados do info.js...");
   Logger.log("Iniciando transferência de dados mapeados...");
-  const abaAtiva = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+
+  const planilhaAtiva = SpreadsheetApp.getActiveSpreadsheet(); // Onde roda o script
+  const abaAtiva = planilhaAtiva.getActiveSheet();
 
   for (const [campo, celula] of Object.entries(MAPA_DADOS_ANANF)) {
     try {
@@ -149,36 +162,20 @@ function replicarConteudo(abaOrigem, abaDestino) {
       Logger.log(`[AVISO] Falha ao copiar campo '${campo}': ${e.message}`);
     }
   }
-
-  copiarDimensoesVisuais(abaOrigem, abaDestino, numLinhas, numColunas);
-  Logger.log("Dimensões visuais (larguras/alturas) copiadas.");
-}
-
-function ajustarDimensoes(aba, linhasNecessarias, colunasNecessarias) {
-  const linhasAtuais = aba.getMaxRows();
-  const colunasAtuais = aba.getMaxColumns();
-
-  if (linhasNecessarias > linhasAtuais) {
-    aba.insertRowsAfter(linhasAtuais, linhasNecessarias - linhasAtuais);
-  }
-
-  if (colunasNecessarias > colunasAtuais) {
-    aba.insertColumnsAfter(colunasAtuais, colunasNecessarias - colunasAtuais);
-  }
-}
-
-function copiarDimensoesVisuais(abaOrigem, abaDestino, numLinhas, numColunas) {
-  for (let col = 1; col <= numColunas; col++) {
-    abaDestino.setColumnWidth(col, abaOrigem.getColumnWidth(col));
-  }
-  for (let linha = 1; linha <= numLinhas; linha++) {
-    abaDestino.setRowHeight(linha, abaOrigem.getRowHeight(linha));
-  }
 }
 
 function getOuCriaPastaANANF(planilha) {
   const pastaPai = getPastaDaPlanilha(planilha);
-  if (!pastaPai) throw new Error("A planilha atual não está salva em nenhuma pasta do Drive.");
+
+  // Se não encontrar pasta pai (ex: planilha na raiz), tenta usar o Root do Drive ou lança erro?
+  // Código original lançava erro. Vamos manter ou melhorar.
+  if (!pastaPai) {
+    // throw new Error("A planilha atual não está salva em nenhuma pasta do Drive.");
+    Logger.log("Aviso: Planilha na raiz ou sem pasta pai identificável. Buscando na raiz do Drive.");
+    // Fallback: buscar na raiz se a planilha não tiver pais (raro, mas possível em "Computadores" ou "Shared with me" dependendo do contexto)
+    // Mas vamos manter a lógica original: exigir pasta pai, pois organização é importante.
+    throw new Error("A planilha atual não está salva em nenhuma pasta do Drive (Root?). Impossível criar subpasta lá.");
+  }
 
   const pastas = pastaPai.getFoldersByName(NOME_PASTA_ANANF);
   const pastaANANF = pastas.hasNext() ? pastas.next() : pastaPai.createFolder(NOME_PASTA_ANANF);
@@ -187,8 +184,13 @@ function getOuCriaPastaANANF(planilha) {
 }
 
 function getPastaDaPlanilha(planilha) {
-  const parents = DriveApp.getFileById(planilha.getId()).getParents();
-  return parents.hasNext() ? parents.next() : null;
+  try {
+    const parents = DriveApp.getFileById(planilha.getId()).getParents();
+    return parents.hasNext() ? parents.next() : null;
+  } catch (e) {
+    Logger.log("Erro ao buscar pasta pai: " + e.message);
+    return null;
+  }
 }
 
 function mostrarMensagemANANFGerado(nomeAluno, urlPlanilha) {
