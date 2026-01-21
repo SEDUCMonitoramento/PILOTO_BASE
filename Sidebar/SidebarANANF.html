@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>ANANFs Gerados</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 16px;
+      background: #f5f5f5;
+    }
+
+    h2 {
+      color: #1a73e8;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .ananf-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ananf-item {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: all 0.2s;
+      cursor: pointer;
+      border-left: 4px solid #1a73e8;
+    }
+
+    .ananf-item:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+
+    .ananf-name {
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .ananf-date {
+      font-size: 12px;
+      color: #5f6368;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.3;
+    }
+
+    .refresh-btn {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: #1557b0;
+    }
+
+    .refresh-btn:active {
+      background: #0d47a1;
+    }
+
+    .error {
+      background: #fce8e6;
+      color: #d93025;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h2>📋 ANANFs Gerados</h2>
+  
+  <button class="refresh-btn" onclick="carregarANANFs()">
+    🔄 Atualizar Lista
+  </button>
+
+  <div id="content">
+    <div class="loading">Carregando...</div>
+  </div>
+
+  <script>
+    // Carrega ANANFs ao abrir sidebar
+    window.onload = function() {
+      carregarANANFs();
+    };
+
+    function carregarANANFs() {
+      document.getElementById('content').innerHTML = '<div class="loading">Carregando...</div>';
+      
+      google.script.run
+        .withSuccessHandler(mostrarANANFs)
+        .withFailureHandler(mostrarErro)
+        .listarANANFs();
+    }
+
+    function mostrarANANFs(ananfs) {
+      const content = document.getElementById('content');
+      
+      if (!ananfs || ananfs.length === 0) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <p>Nenhum ANANF gerado ainda</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '<div class="ananf-list">';
+      
+      ananfs.forEach(function(ananf) {
+        html += `
+          <div class="ananf-item" onclick="abrirANANF('${ananf.url}')">
+            <div class="ananf-name">${ananf.nome}</div>
+            <div class="ananf-date">📅 ${ananf.data}</div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function abrirANANF(url) {
+      window.open(url, '_blank');
+    }
+
+    function mostrarErro(erro) {
+      document.getElementById('content').innerHTML = `
+        <div class="error">
+          ❌ Erro ao carregar ANANFs: ${erro.message || 'Erro desconhecido'}
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
