@@ -18,6 +18,21 @@ const FORMATO_DATA = "yyyy/MM/dd HH:mm:ss";
  */
 function replicarAbaParaOutraPlanilha() {
   console.time("Execução_ANANF");
+  // Etapa 0: Navegação e Validação Visual
+  abrir_aba_ativando(NOME_ABA_MODELO);
+
+  const ui = SpreadsheetApp.getUi();
+  const resposta = ui.alert(
+    "Confirmação",
+    "Os dados na aba 'Doc_Ananf' estão corretos e preenchidos?",
+    ui.ButtonSet.YES_NO
+  );
+
+  if (resposta !== ui.Button.YES) {
+    ui.alert("Operação cancelada pelo usuário.");
+    console.log(">> [CANCELADO] Usuário cancelou na validação.");
+    return;
+  }
 
   // =========================================================================
   // Etapa 1: Configurações e Logs Iniciais

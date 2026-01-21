@@ -35,7 +35,7 @@ function ImpListCont() {
  * @param {string} areaImpressao - Área final de impressão para selecionar (ex: 'A2:U50')
  */
 function configurarImpressao(colunasOcultar, colunaAtivar, areaImpressao) {
-  abrir_IMP_List();
+  abrir_aba_ativando();
   Retorna_colunas();
 
   const spreadsheet = SpreadsheetApp.getActive();
@@ -63,19 +63,8 @@ function InterImpress() {
 
 function Retorna_colunas() {
   var spreadsheet = SpreadsheetApp.getActive();
-  // Mantido lógica original: Ativa T, mostra 13 colunas a partir da 20 (T), ativa T1.
   spreadsheet.getRange('T:T').activate();
   spreadsheet.getActiveSheet().showColumns(20, 13);
   spreadsheet.getRange('T1').activate();
   SpreadsheetApp.flush();
-}
-
-function abrir_IMP_List() {
-  var spreadsheet = SpreadsheetApp.getActive();
-  var sheet = spreadsheet.getSheetByName("IMP_List");
-  if (sheet) {
-    sheet.activate();
-  } else {
-    SpreadsheetApp.getUi().alert("Aba 'IMP_List' não encontrada!");
-  }
 }
