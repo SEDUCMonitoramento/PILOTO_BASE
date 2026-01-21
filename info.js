@@ -3,7 +3,7 @@
  * Chave: Nome do campo
  * Valor: Célula correspondente na planilha
  */
-const MAPA_DADOS_ANANF = {
+const DADOS_ANANF = {
     // DADOS DA ESCOLA
     nomeEscola: "D6",
     EnderecoEscola: "D7",

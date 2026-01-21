@@ -36,14 +36,14 @@ function replicarAbaParaOutraPlanilha() {
     const abaAtiva = planilhaAtiva.getActiveSheet();
 
     // Valida RA e Nome usando info.js
-    const raAluno = abaAtiva.getRange(MAPA_DADOS_ANANF.RA).getValue();
-    const nomeAluno = abaAtiva.getRange(MAPA_DADOS_ANANF.nomeAluno).getValue();
+    const raAluno = abaAtiva.getRange(DADOS_ANANF.RA).getValue();
+    const nomeAluno = abaAtiva.getRange(DADOS_ANANF.nomeAluno).getValue();
 
     Logger.log(`   RA: ${raAluno} | Nome: ${nomeAluno}`);
 
     // Etapa 6a: Validar se RA está ok (antecipado para não criar arquivo à toa)
     if (!raAluno) {
-      throw new Error(`RA não encontrado na célula ${MAPA_DADOS_ANANF.RA}. Processo abortado.`);
+      throw new Error(`RA não encontrado na célula ${DADOS_ANANF.RA}. Processo abortado.`);
     }
 
 
@@ -120,7 +120,7 @@ function replicarAbaParaOutraPlanilha() {
 function preencherDados(abaDestino, abaOrigem) {
   Logger.log("   Transferindo dados mapeados (info.js)...");
 
-  for (const [campo, celula] of Object.entries(MAPA_DADOS_ANANF)) {
+  for (const [campo, celula] of Object.entries(DADOS_ANANF)) {
     try {
       const valor = abaOrigem.getRange(celula).getValue();
       abaDestino.getRange(celula).setValue(valor);
