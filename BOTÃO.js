@@ -1,15 +1,12 @@
 function onOpen(e) {
   const ui = SpreadsheetApp.getUi();
 
-  // Menu: Atualizar All
-  ui.createMenu("Atualizar All")
-    .addItem("Atualizar All", "escreverFormula_QUERY_das_ALL")
-    .addToUi();
-
-  // Menu: Piloto
-  ui.createMenu("Piloto")
+  // Menu: Navegar
+  ui.createMenu("Navegar")
     .addItem("Ir para Inicial", "inicial_ir")
     .addItem("Ir para Piloto", "piloto_ir")
+    .addSeparator()
+    .addItem("Ir para Ananf", "ir_ananf")
     .addToUi();
 
   // Menu: Imprimir Listas
@@ -24,21 +21,22 @@ function onOpen(e) {
 
   // Menu: ANANF
   ui.createMenu("ANANF")
+    .addItem("Abrir aba Ananf", "ir_ananf")
     .addItem("Gerar ANANF", "replicarAbaParaOutraPlanilha")
     .addItem("Ver ANANFs", "abrirSidebarANANF")
     .addToUi();
 }
 
 function piloto_ir() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const abaPiloto = ss.getSheetByName("Piloto");
-  ss.setActiveSheet(abaPiloto);
+  abrir_aba_ativando("Piloto"); s
 }
 
 function inicial_ir() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const abaInicial = ss.getSheetByName("Inicial");
-  ss.setActiveSheet(abaInicial);
+  abrir_aba_ativando("Inicial");
+}
+
+function ir_ananf() {
+  abrir_aba_ativando("Doc_Ananf");
 }
 
 // Funções auxiliares mantidas para compatibilidade, embora pareçam não estar em uso ativo nos menus atuais
