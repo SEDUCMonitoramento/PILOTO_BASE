@@ -10,6 +10,18 @@ function abrirSidebarANANF() {
 }
 
 /**
+ * Abre o modal (janela flutuante) maior com a lista de ANANFs
+ */
+function abrirModalANANF() {
+    const html = HtmlService.createHtmlOutputFromFile('Sidebar/SidebarANANF')
+        .setTitle('ANANFs Gerados (Expandido)')
+        .setWidth(600)
+        .setHeight(500);
+
+    SpreadsheetApp.getUi().showModelessDialog(html, 'ANANFs Gerados');
+}
+
+/**
  * Lista todos os ANANFs gerados na pasta ANANF
  * @returns {Array} Array de objetos com informações dos ANANFs
  */

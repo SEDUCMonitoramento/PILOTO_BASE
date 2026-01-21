@@ -55,6 +55,7 @@
       color: #202124;
       margin-bottom: 4px;
       font-size: 14px;
+      word-wrap: break-word; /* Garante que nomes longos quebrem linha */
     }
 
     .ananf-date {
@@ -74,27 +75,36 @@
       opacity: 0.3;
     }
 
-    .refresh-btn {
+    .header-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
       background: #1a73e8;
       color: white;
       border: none;
       padding: 10px 16px;
       border-radius: 6px;
       cursor: pointer;
-      width: 100%;
-      margin-bottom: 16px;
       font-size: 14px;
       font-weight: 500;
       transition: background 0.2s;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .btn-secondary {
+      background: #5f6368;
+      flex: 0 0 auto; /* Não estica */
     }
 
-    .refresh-btn:hover {
-      background: #1557b0;
-    }
-
-    .refresh-btn:active {
-      background: #0d47a1;
-    }
+    .btn:hover { background: #1557b0; }
+    .btn-secondary:hover { background: #45484c; }
+    .btn:active { background: #0d47a1; }
 
     .error {
       background: #fce8e6;
@@ -109,9 +119,14 @@
 <body>
   <h2>📋 ANANFs Gerados</h2>
   
-  <button class="refresh-btn" onclick="carregarANANFs()">
-    🔄 Atualizar Lista
-  </button>
+  <div class="header-controls">
+    <button class="btn" onclick="carregarANANFs()" title="Atualizar Lista">
+      🔄 Atualizar
+    </button>
+    <button class="btn btn-secondary" onclick="expandirSidebar()" title="Expandir Janela">
+      ⛶
+    </button>
+  </div>
 
   <div id="content">
     <div class="loading">Carregando...</div>
@@ -130,6 +145,10 @@
         .withSuccessHandler(mostrarANANFs)
         .withFailureHandler(mostrarErro)
         .listarANANFs();
+    }
+    
+    function expandirSidebar() {
+       google.script.run.abrirModalANANF();
     }
 
     function mostrarANANFs(ananfs) {

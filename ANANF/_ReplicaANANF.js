@@ -64,7 +64,7 @@ function replicarAbaParaOutraPlanilha() {
     Logger.log(">> [ETAPA 4] Copiando arquivo modelo...");
 
     const dataFormatada = Utilities.formatDate(new Date(), TIMEZONE, FORMATO_DATA);
-    const nomeNovoArquivo = `${PREFIXO_PLANILHA}${raAluno} - ${dataFormatada}`;
+    const nomeNovoArquivo = `${PREFIXO_PLANILHA}${raAluno} - ${dataFormatada} ${nomeAluno}`;
 
     // Faz a cópia direto do arquivo no Drive
     const arquivoModelo = DriveApp.getFileById(ID_PLANILHA_ORIGEM);
