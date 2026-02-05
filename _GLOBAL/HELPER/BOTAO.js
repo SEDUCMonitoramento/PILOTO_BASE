@@ -41,14 +41,16 @@ function ir_ananf() {
 
 // Funções auxiliares mantidas para compatibilidade, embora pareçam não estar em uso ativo nos menus atuais
 function obterSalas() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheetPiloto = ss.getSheetByName("Piloto");
-  let salas = [];
+  const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  const abaPiloto = planilha.getSheetByName("Piloto");
+  const listaSalas = [];
+
   for (let i = 4; i <= 39; i++) {
-    let value = sheetPiloto.getRange("C" + i).getValue();
-    if (value) {
-      salas.push(value);
+    const valorCelula = abaPiloto.getRange("C" + i).getValue();
+    if (valorCelula) {
+      listaSalas.push(valorCelula);
     }
   }
-  return salas;
+
+  return listaSalas;
 }

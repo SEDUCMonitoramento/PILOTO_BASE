@@ -3,22 +3,22 @@ function CompartilharPDI() {
   let sheet = ss.getSheetByName("LinkPilotos")
   let urlpilotos = sheet.getRange("B1:D30").getValues()
 
-  urlpilotos.forEach((piloto)=>{
+  urlpilotos.forEach((piloto) => {
     console.log(piloto[0]) // Escola
 
     let escola = SpreadsheetApp.openById(piloto[1])
 
-    let turmas = escola.getSheetByName("Piloto").getRange("C4:C40").getValues().filter((x)=>(x != ""))
+    let turmas = escola.getSheetByName("Piloto").getRange("C4:C40").getValues().filter((x) => (x != ""))
     //console.log(turmas)
 
-    turmas.forEach((turma)=>{
+    turmas.forEach((turma) => {
       console.log(turma[0]) // Turma
-      if (escola.getSheetByName(turma[0])){
-        for(let i = 7; i <= 70; i++){
-          escola.getSheetByName(turma[0]).getRange("AY"+i).setFormula('=IFERROR("https://docs.google.com/spreadsheets/d/"&PROCV($E' + i + '; AEEv24!$C$4:$F;3;0);" ")')
+      if (escola.getSheetByName(turma[0])) {
+        for (let i = 7; i <= 70; i++) {
+          escola.getSheetByName(turma[0]).getRange("AY" + i).setFormula('=IFERROR("https://docs.google.com/spreadsheets/d/"&PROCV($E' + i + '; AEEv24!$C$4:$F;3;0);" ")')
           //escola.getSheetByName(turma[0]).getRange("AY"+i).setFormula('=SEERRO("https://docs.google.com/spreadsheets/d/"&PROCV($E' + i + '; AEEv25!$C$4:$F;3;0);" ")')
         }
-      }else{
+      } else {
         console.log(`Turma ${turma[0]} não existe`)
       }
     })

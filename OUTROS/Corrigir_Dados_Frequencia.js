@@ -7,17 +7,17 @@ function CorrigirDadosFrequenciaPorPiloto() {
   let sheet = ss.getSheetByName("LinkPilotos")
   let urlpilotos = sheet.getRange("B1:D30").getValues()
 
-  urlpilotos.forEach((piloto)=>{
+  urlpilotos.forEach((piloto) => {
     console.log(piloto[0]) // Escola
 
     let escola = SpreadsheetApp.openById(piloto[1])
 
-    let turmas = escola.getSheetByName("Piloto").getRange("C4:C40").getValues().filter((x)=>(x != ""))
+    let turmas = escola.getSheetByName("Piloto").getRange("C4:C40").getValues().filter((x) => (x != ""))
     //console.log(turmas)
 
-    turmas.forEach((turma)=>{
+    turmas.forEach((turma) => {
       console.log(turma[0]) // Turma
-      if (escola.getSheetByName(turma[0])){
+      if (escola.getSheetByName(turma[0])) {
         escola.getSheetByName(turma[0]).getRange("AB7").setFormula('=IMPORTRANGE($D$4;AB6&"!AW5:AW70")')
         escola.getSheetByName(turma[0]).getRange("AC7").setFormula('=IMPORTRANGE($D$4;AB6&"!G5:G70")')
         escola.getSheetByName(turma[0]).getRange("AD7").setFormula('=IMPORTRANGE($D$4;AD6&"!AW5:AW70")')
@@ -40,7 +40,7 @@ function CorrigirDadosFrequenciaPorPiloto() {
         escola.getSheetByName(turma[0]).getRange("AU7").setFormula('=IMPORTRANGE($D$4;AT6&"!G5:G70")')
         escola.getSheetByName(turma[0]).getRange("AV7").setFormula('=IMPORTRANGE($D$4;AV6&"!AW5:AW70")')
         escola.getSheetByName(turma[0]).getRange("AW7").setFormula('=IMPORTRANGE($D$4;AV6&"!G5:G70")')
-      }else{
+      } else {
         console.log(`Turma ${turma[0]} não existe`)
       }
     })
