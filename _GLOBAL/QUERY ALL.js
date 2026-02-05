@@ -3,7 +3,6 @@ function escreverFormula_QUERY_das_ALL() {
   let piloto = planilha.getSheetByName("Piloto");
   let intervalo = piloto.getRange("C4:C40");
   let valores = intervalo.getValues();
-  console.log(valores)
   // Criar uma variável para armazenar a fórmula
   let formula = "=QUERY({";
   // Percorrer os valores do intervalo
@@ -22,11 +21,12 @@ function escreverFormula_QUERY_das_ALL() {
   formula += "}; \"select * where Col1 is not null\")";
   // Obter a planilha ALL
 
-  console.log(formula)
+
   let all = planilha.getSheetByName("All");
   // Obter a célula A2 da planilha ALL
   let celula = all.getRange("A2");
   // Escrever a fórmula na célula
   celula.setFormula(formula);
+  console.log(`Fórmula escrita na célula A2 da All: ${formula}`);
 
 }

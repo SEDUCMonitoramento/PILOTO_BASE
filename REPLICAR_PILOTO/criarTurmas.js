@@ -8,7 +8,6 @@
  * - Redução drástica de chamadas à API
  * 
  * Áreas liberadas para edição:
- * - 1:6 (linhas de cabeçalho)
  * - A7:R70 (dados principais)
  * - W7:X70
  * - AA7:AA70
@@ -20,47 +19,78 @@
  * Função principal para criar todas as turmas de forma otimizada
  */
 function criarTurmas() {
+  const inicioScript = new Date();
+  Logger.log('═══════════════════════════════════════════════════════');
+  Logger.log('🚀 Iniciando criação de turmas...');
+
   const planilha = SpreadsheetApp.getActiveSpreadsheet();
   const planilhaId = planilha.getId();
   const nomeAbaBase = 'Base';
 
   // 1. Limpar e ocultar linhas da página Piloto
+  const inicioLimpeza = new Date();
   limparEOcultarLinhas();
+  Logger.log(`✓ Linhas limpas e ocultadas (${new Date() - inicioLimpeza}ms)`);
 
   // 2. Verificação de segurança
   const mapaAbas = construirMapaAbas(planilha);
   if (!mapaAbas[nomeAbaBase]) {
+    Logger.log(`❌ Erro: Aba '${nomeAbaBase}' não encontrada!`);
     SpreadsheetApp.getUi().alert(`Aba '${nomeAbaBase}' não encontrada!`);
     return;
   }
 
-  // 3. Identificar turmas a criar
+  // 3. Mostrar aba Base temporariamente
+  const abaBaseVisivel = mostrarAbaBase(planilha, nomeAbaBase);
+
+  // 4. Identificar turmas a criar
   const todasTurmas = obterListaTurmas(planilha);
   const turmasParaCriar = todasTurmas.filter(nomeTurma => !mapaAbas[nomeTurma]);
 
+  Logger.log(`📊 Total de turmas: ${todasTurmas.length}`);
+  Logger.log(`📋 Turmas existentes: ${todasTurmas.length - turmasParaCriar.length}`);
+  Logger.log(`➕ Turmas a criar: ${turmasParaCriar.length}`);
+
   if (!turmasParaCriar.length) {
-    Logger.log('Nenhuma turma nova para criar');
+    Logger.log('ℹ️ Nenhuma turma nova para criar');
     escreverFormula_QUERY_das_ALL();
+    ocultarAbaBase(planilha, nomeAbaBase, abaBaseVisivel);
+    Logger.log('═══════════════════════════════════════════════════════');
     return;
   }
 
-  Logger.log(`Criando ${turmasParaCriar.length} turma(s) em lote...`);
+  Logger.log(`🔄 Criando ${turmasParaCriar.length} turma(s): ${turmasParaCriar.join(', ')}`);
 
-  // 4. Duplicação em lote
+  // 5. Duplicação em lote
+  const inicioDuplicacao = new Date();
   const abaBaseId = mapaAbas[nomeAbaBase].getSheetId();
   const indiceInsercao = obterIndiceInsercao(planilha, nomeAbaBase);
   const idsNovasAbas = duplicarAbasEmLote(planilhaId, abaBaseId, turmasParaCriar, indiceInsercao);
+  Logger.log(`✓ ${turmasParaCriar.length} aba(s) duplicada(s) (${new Date() - inicioDuplicacao}ms)`);
 
-  // 5. Configuração em lote (propriedades + proteções)
+  // 6. Configuração em lote (propriedades + proteções)
+  const inicioConfiguracao = new Date();
   configurarAbasEmLote(planilhaId, idsNovasAbas);
+  Logger.log(`✓ Proteções aplicadas em ${turmasParaCriar.length} aba(s) (${new Date() - inicioConfiguracao}ms)`);
 
-  // 6. Escrever nomes das turmas em lote
+  // 7. Escrever nomes das turmas em lote
+  const inicioEscrita = new Date();
   escreverNomesEmLote(planilhaId, turmasParaCriar);
+  Logger.log(`✓ Nomes escritos em ${turmasParaCriar.length} aba(s) (${new Date() - inicioEscrita}ms)`);
 
-  // 7. Fazer a ALL
+  // 8. Ocultar aba Base novamente
+  ocultarAbaBase(planilha, nomeAbaBase, abaBaseVisivel);
+
+  // 9. Fazer a ALL
+  const inicioQuery = new Date();
   escreverFormula_QUERY_das_ALL();
+  Logger.log(`✓ Fórmula QUERY da aba ALL atualizada (${new Date() - inicioQuery}ms)`);
 
-  Logger.log(`✓ ${turmasParaCriar.length} turma(s) criada(s) com sucesso!`);
+  const tempoTotal = new Date() - inicioScript;
+  Logger.log('═══════════════════════════════════════════════════════');
+  Logger.log(`✅ ${turmasParaCriar.length} turma(s) criada(s) com sucesso!`);
+  Logger.log(`⏱️ Tempo total: ${(tempoTotal / 1000).toFixed(1)}s (${tempoTotal}ms)`);
+  Logger.log('═══════════════════════════════════════════════════════');
 }
 
 /**
@@ -159,7 +189,6 @@ function configurarAbasEmLote(planilhaId, idsAbas) {
             { sheetId: idAba, startRowIndex: 6, endRowIndex: 70, startColumnIndex: 26, endColumnIndex: 27 },   // AA7:AA70
             { sheetId: idAba, startRowIndex: 6, endRowIndex: 70, startColumnIndex: 22, endColumnIndex: 24 },   // W7:X70
             { sheetId: idAba, startRowIndex: 6, endRowIndex: 70, startColumnIndex: 51, endColumnIndex: 54 },   // AZ7:BB70
-            { sheetId: idAba, startRowIndex: 0, endRowIndex: 6 }                                               // 1:6
           ],
           editors: { users: [emailUsuario] }
         }
@@ -192,19 +221,65 @@ function escreverNomesEmLote(planilhaId, nomesTurmas) {
 }
 
 /**
+ * Mostra temporariamente a aba Base para duplicação
+ * @param {Spreadsheet} planilha - A planilha ativa
+ * @param {string} nomeAbaBase - Nome da aba base
+ * @returns {boolean} true se a aba estava oculta, false caso contrário
+ */
+function mostrarAbaBase(planilha, nomeAbaBase) {
+  const abaBase = planilha.getSheetByName(nomeAbaBase);
+
+  if (!abaBase) {
+    Logger.log(`⚠️ Aba '${nomeAbaBase}' não encontrada`);
+    return false;
+  }
+
+  if (abaBase.isSheetHidden()) {
+    abaBase.showSheet();
+    Logger.log(`👁️ Aba '${nomeAbaBase}' exibida temporariamente`);
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Oculta a aba Base após a duplicação
+ * @param {Spreadsheet} planilha - A planilha ativa
+ * @param {string} nomeAbaBase - Nome da aba base
+ * @param {boolean} estavaoculta - Se a aba estava oculta antes
+ */
+function ocultarAbaBase(planilha, nomeAbaBase, estavaoculta) {
+  if (!estavaoculta) {
+    return; // Se não estava oculta, não ocultar agora
+  }
+
+  const abaBase = planilha.getSheetByName(nomeAbaBase);
+  if (abaBase && !abaBase.isSheetHidden()) {
+    abaBase.hideSheet();
+    Logger.log(`🔒 Aba '${nomeAbaBase}' ocultada novamente`);
+  }
+}
+
+/**
  * Remove todas as proteções das abas de turmas listadas na aba "Piloto"
  * @param {Spreadsheet} planilha - A planilha ativa
  */
 function removerProtecoes(planilha) {
+  Logger.log('🗑️ Removendo proteções...');
   const abaPiloto = planilha.getSheetByName("Piloto");
   const nomesTurmas = abaPiloto.getRange("C4:C40").getValues().flat();
+  let contador = 0;
 
   nomesTurmas.forEach(nomeTurma => {
     const aba = planilha.getSheetByName(nomeTurma);
     if (aba) {
       const protecoes = aba.getProtections(SpreadsheetApp.ProtectionType.SHEET);
       protecoes.forEach(protecao => protecao.remove());
-      Logger.log(`Proteções removidas da aba: ${nomeTurma}`);
+      contador++;
+      Logger.log(`  ✓ Proteções removidas: ${nomeTurma}`);
     }
   });
+
+  Logger.log(`✅ Total de ${contador} aba(s) desprotegida(s)`);
 }
